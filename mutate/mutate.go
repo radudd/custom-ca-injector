@@ -3,8 +3,9 @@ package mutate
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"os"
 
+	log "github.com/sirupsen/logrus"
 	v1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +41,17 @@ type patchOperation struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path"`
 	Value interface{} `json:"value, omitempty"`
+}
+
+func init() {
+	// log as JSON
+	log.SetFormatter(&log.JSONFormatter{})
+
+	// Output everything including stderr to stdout
+	log.SetOutput(os.Stdout)
+
+	// set level
+	log.SetLevel(log.InfoLevel)
 }
 
 func initialize(pod *corev1.Pod) {
@@ -154,14 +166,109 @@ func addVolume(target []corev1.Volume, added []corev1.Volume, basePath string) (
 	return patch
 }
 
+func injectPem(pod corev1.Pod) []patchOperation {
+	// define volumeMounts for all the application containers
+	var volumeMounts []corev1.VolumeMount
+	// define volumes
+	var volumes []corev1.Volume
+	// define patch operations
+	var patch []patchOperation
+	// defines read-only permission for mounting the CA
+	var defaultMode int32 = 0400
+
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		Name:      "trusted-ca-pem",
+		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		ReadOnly:  true,
+	})
+	volumes = append(volumes, corev1.Volume{
+		Name: "trusted-ca-pem",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: pod.ObjectMeta.Annotations[AnnotationConfigMap],
+				},
+				Items: []corev1.KeyToPath{
+					{
+						Key:  "ca-bundle.crt",
+						Path: "tls-ca-bundle.pem",
+						Mode: &defaultMode,
+					},
+				},
+			},
+		}})
+	patch = append(patch, addVolume(pod.Spec.Volumes, volumes, "/spec/volumes")...)
+	for i, cont := range pod.Spec.Containers {
+		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
+	}
+	for i, cont := range pod.Spec.InitContainers {
+		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
+	}
+	log.Info(patch)
+	return patch
+}
+
+func injectJks(pod corev1.Pod) []patchOperation {
+	// define patch operations
+	var patch []patchOperation
+	// defines read-only permission for mounting the CA
+	volumeMounts := append([]corev1.VolumeMount{}, corev1.VolumeMount{
+		Name:      "trusted-ca-jks",
+		MountPath: "/etc/pki/ca-trust/extracted/java",
+		ReadOnly:  true,
+	})
+	volumes := append([]corev1.Volume{}, corev1.Volume{
+		Name: "trusted-ca-jks",
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	})
+	initContainers := append([]corev1.Container{}, corev1.Container{
+		Name:  "generate-jks-truststore",
+		Image: pod.ObjectMeta.Annotations[AnnotationImage],
+		Command: []string{
+			"sh",
+			"-c",
+			"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts keytool -import -alias customca -file /pem/tls-ca-bundle.pem -storetype JKS -storepass changeit -noprompt -keystore /jks/cacerts && chmod 400 /jks/cacerts",
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "trusted-ca-pem",
+				MountPath: "/pem",
+			},
+			{
+				Name:      "trusted-ca-jks",
+				MountPath: "/jks",
+			},
+		},
+	},
+	)
+	patch = append(patch, addVolume(pod.Spec.Volumes, volumes, "/spec/volumes")...)
+	for i, cont := range pod.Spec.Containers {
+		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
+	}
+	for i, cont := range pod.Spec.InitContainers {
+		if cont.Name != "generate-jks-truststore" {
+			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
+		}
+	}
+	patch = append(patch, addContainer(pod.Spec.InitContainers, initContainers, "/spec/initContainers")...)
+
+	log.Info(patch)
+	return patch
+}
+
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
+	// define patch operations
+	var patch []patchOperation
+
 	var ppod *corev1.Pod
 	var ar *v1beta1.AdmissionReview
 	var err error
 
 	if ppod, ar, err = requireMutation(body); err != nil {
-		log.Fatal(err)
+		log.Error(err.Error())
 		return nil, err
 	}
 	// define the response that we will need to send back to K8S API
@@ -173,96 +280,14 @@ func Mutate(body []byte) ([]byte, error) {
 	// Get the Pod value from Pointer
 	pod := *ppod
 
-	// define initContainer
-	var initContainers []corev1.Container
-	// define volumeMounts for all the application containers
-	var volumeMounts []corev1.VolumeMount
-	// define volumes
-	var volumes []corev1.Volume
-	// define patch operations
-	var patch []patchOperation
-	// defines read-only permission for mounting the CA
-	var defaultMode int32 = 0400
-
 	// if custom PKI PEM injection is annotated:
 	// mount ConfigMap Volume containing CA Bundle to the Pod, add volumeMounts to all containers
 	if pod.ObjectMeta.Annotations[AnnotationCaPemInject] == "true" {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "trusted-ca-pem",
-			MountPath: "/etc/pki/ca-trust/extracted/pem",
-			ReadOnly:  true,
-		})
-		volumes = append(volumes, corev1.Volume{
-			Name: "trusted-ca-pem",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: pod.ObjectMeta.Annotations[AnnotationConfigMap],
-					},
-					Items: []corev1.KeyToPath{
-						{
-							Key:  "ca-bundle.crt",
-							Path: "tls-ca-bundle.pem",
-							Mode: &defaultMode,
-						},
-					},
-				},
-			}})
-		patch = append(patch, addVolume(pod.Spec.Volumes, volumes, "/spec/volumes")...)
-		for i, cont := range pod.Spec.Containers {
-			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
-		}
-		/*
-		for i, cont := range pod.Spec.InitContainers {
-			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
-		}
-		*/
+		patch = append(patch, injectPem(pod)...)
 	}
 
 	if pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "true" {
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "trusted-ca-jks",
-			MountPath: "/etc/pki/ca-trust/extracted/java",
-			ReadOnly:  true,
-		})
-		volumes = append(volumes, corev1.Volume{
-			Name: "trusted-ca-jks",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		})
-		initContainers := append(initContainers, corev1.Container{
-			Name:  "generate-jks-truststore",
-			Image: pod.ObjectMeta.Annotations[AnnotationImage],
-			Command: []string{
-				"sh",
-				"-c",
-				"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts keytool -import -alias customca -file /pem/tls-ca-bundle.pem -storetype JKS -storepass changeit -noprompt -keystore /jks/cacerts && chmod 400 /jks/cacerts",
-			},
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "trusted-ca-pem",
-					MountPath: "/pem",
-				},
-				{
-					Name:      "trusted-ca-jks",
-					MountPath: "/jks",
-				},
-			},
-		},
-		)
-		patch = append(patch, addVolume(pod.Spec.Volumes, volumes, "/spec/volumes")...)
-		for i, cont := range pod.Spec.Containers {
-			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
-		}
-		/*
-		for i, cont := range pod.Spec.InitContainers {
-			if cont.Name != "generate-jks-truststore" {
-				patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
-			}
-		}
-		*/
-		patch = append(patch, addContainer(pod.Spec.InitContainers, initContainers, "/spec/initContainers")...)
+		patch = append(patch, injectJks(pod)...)
 	}
 
 	// Create the AdmissionReview.Response
