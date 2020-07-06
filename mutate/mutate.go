@@ -212,9 +212,11 @@ func Mutate(body []byte) ([]byte, error) {
 		for i, cont := range pod.Spec.Containers {
 			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
 		}
+		/*
 		for i, cont := range pod.Spec.InitContainers {
 			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
 		}
+		*/
 	}
 
 	if pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "true" {
@@ -253,11 +255,13 @@ func Mutate(body []byte) ([]byte, error) {
 		for i, cont := range pod.Spec.Containers {
 			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
 		}
+		/*
 		for i, cont := range pod.Spec.InitContainers {
 			if cont.Name != "generate-jks-truststore" {
 				patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
 			}
 		}
+		*/
 		patch = append(patch, addContainer(pod.Spec.InitContainers, initContainers, "/spec/initContainers")...)
 	}
 
