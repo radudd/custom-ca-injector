@@ -294,18 +294,17 @@ func Mutate(body []byte) ([]byte, error) {
 	// define the response that we will need to send back to K8S API
 	arResponse := v1beta1.AdmissionResponse{}
 
-	in, err := checkAnnotations(pod) 
+	in, err := checkAnnotations(pod)
 	if err != nil {
 		log.Error(err.Error())
 	}
-
-	if (*in).injectPem {
-		patch = append(patch, injectPemCA(pod)...)
-	}
 	if (*in).injectJks {
+		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)
 	}
-
+	if !(*in).injectJks && (*in).injectPem {
+		patch = append(patch, injectPemCA(pod)...)
+	}
 
 	// Create the AdmissionReview.Response
 	arResponse.Patch, err = json.Marshal(patch)
