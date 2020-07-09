@@ -55,7 +55,7 @@ func TestMutatesValidRequest(t *testing.T) {
 						"name": "c7m"
 					},
 					"annotations": {
-						"kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{},\"labels\":{\"name\":\"c7m\"},\"name\":\"c7m\",\"namespace\":\"yolo\"},\"spec\":{\"containers\":[{\"args\":[\"-c\",\"trap \\\"killall sleep\\\" TERM; trap \\\"kill -9 sleep\\\" KILL; sleep infinity\"],\"command\":[\"/bin/bash\"],\"image\":\"centos:7\",\"name\":\"c7m\"}]}}\n"
+						"custompki.openshift.io/inject-pem": "true"
 					}
 				},
 				"spec": {
@@ -135,9 +135,7 @@ func TestMutatesValidRequest(t *testing.T) {
 	assert.NoError(t, err, "failed to unmarshal with error %s", err)
 
 	rr := r.Response
-	assert.Equal(t, `[{"op":"replace","path":"/spec/containers/0/image","value":"debian"}]`, string(rr.Patch))
-	assert.Contains(t, rr.AuditAnnotations, "mutateme")
-
+	assert.Equal(t, `[{"op":"add","path":"/spec/volumes/-","value":{"name":"trusted-ca-pem","configMap":{"name":"custom-ca","items":[{"key":"ca-bundle.crt","path":"tls-ca-bundle.pem","mode":256}]}}},{"op":"add","path":"/spec/containers/0/volumeMounts/-","value":{"name":"trusted-ca-pem","readOnly":true,"mountPath":"/etc/pki/ca-trust/extracted/pem"}}]`, string(rr.Patch))
 }
 
 func TestErrorsOnInvalidJson(t *testing.T) {

@@ -62,7 +62,7 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectPem = injectPem
-		log.Info("Pod " + pod.GetObjectMeta().GetNamespace() + "/" + pod.GetObjectMeta().GetName() + "-> inject-pem: " + extrInjectPem)
+		log.Info("Pod " + pod.ObjectMeta.Namespace + "/" + pod.ObjectMeta.Name + "-> inject-pem: " + extrInjectPem)
 	}
 
 	// Check if annotation for injecting JKS ca is present
@@ -73,7 +73,7 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectJks = injectJks
-		log.Info("Pod " + pod.GetObjectMeta().GetNamespace() + "/" + pod.GetObjectMeta().GetName() + "-> inject-jks: " + extrInjectJks)
+		log.Info("Pod " + pod.ObjectMeta.Namespace + "/" + pod.ObjectMeta.Name + "-> inject-jks: " + extrInjectJks)
 	}
 	if in.injectPem || in.injectJks {
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationImage]; !ok {
@@ -82,10 +82,10 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMap]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationConfigMap] = DefaultConfigMap
 		}
-		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInject]; !ok {
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath] = DefaultInjectPemPath
 		}
-		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaJksInject]; !ok {
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaJksInjectPath]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationCaJksInjectPath] = DefaultInjectJksPath
 		}
 	}
@@ -198,7 +198,7 @@ func injectPemCA(pod *corev1.Pod) []patchOperation {
 
 	volumeMounts = append(volumeMounts, corev1.VolumeMount{
 		Name:      "trusted-ca-pem",
-		MountPath: "/etc/pki/ca-trust/extracted/pem",
+		MountPath: pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath],
 		ReadOnly:  true,
 	})
 	volumes = append(volumes, corev1.Volume{
@@ -224,7 +224,6 @@ func injectPemCA(pod *corev1.Pod) []patchOperation {
 	for i, cont := range (*pod).Spec.InitContainers {
 		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
 	}
-	log.Info(patch)
 	return patch
 }
 
@@ -234,7 +233,7 @@ func injectJksCA(pod *corev1.Pod) []patchOperation {
 	// defines read-only permission for mounting the CA
 	volumeMounts := append([]corev1.VolumeMount{}, corev1.VolumeMount{
 		Name:      "trusted-ca-jks",
-		MountPath: "/etc/pki/ca-trust/extracted/java",
+		MountPath: pod.ObjectMeta.Annotations[AnnotationCaJksInjectPath],
 		ReadOnly:  true,
 	})
 	volumes := append([]corev1.Volume{}, corev1.Volume{
@@ -248,7 +247,7 @@ func injectJksCA(pod *corev1.Pod) []patchOperation {
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
 		Command: []string{
 			"sh",
-			"-xc",
+			"-c",
 			"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts && keytool -import -alias customca -file /pem/tls-ca-bundle.pem -storetype JKS -storepass changeit -noprompt -keystore /jks/cacerts && chmod 400 /jks/cacerts",
 		},
 		VolumeMounts: []corev1.VolumeMount{
@@ -274,7 +273,6 @@ func injectJksCA(pod *corev1.Pod) []patchOperation {
 	}
 	patch = append(patch, addContainer((*pod).Spec.InitContainers, initContainers, "/spec/initContainers")...)
 
-	log.Info(patch)
 	return patch
 }
 
