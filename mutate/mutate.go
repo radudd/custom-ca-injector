@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 	v1beta1 "k8s.io/api/admission/v1beta1"
@@ -12,23 +13,17 @@ import (
 )
 
 const (
-	// AnnotationCaPemInject controls the injection of the Custom CA Certificate in PEM format
-	AnnotationCaPemInject = "custompki.openshift.io/inject-pem"
-
-	// AnnotationCaJksInject controls the injection of the Custom CA Certificate in JKS format
-	AnnotationCaJksInject = "custompki.openshift.io/inject-jks"
-
-	// AnnotationImage controls the image used for the init container
-	AnnotationImage = "custompki.openshift.io/image"
-
-	// AnnotationConfigMap controls the configmap containing merged CA
-	AnnotationConfigMap = "custompki.openshift.io/configmap"
-
 	// DefaultInjectPem defines
-	DefaultInjectPem = "false"
+	DefaultInjectPem = false
+
+	// DefaultInjectPemPath defines
+	DefaultInjectPemPath = "/etc/pki/ca-trust/extracted/pem"
 
 	// DefaultInjectJks defines
-	DefaultInjectJks = "false"
+	DefaultInjectJks = false
+
+	// DefaultInjectJksPath defines
+	DefaultInjectJksPath = "/etc/pki/ca-trust/extracted/java"
 
 	// DefaultInitContainerImage defines default image for init container
 	DefaultInitContainerImage = "docker.io/library/openjdk"
@@ -36,12 +31,6 @@ const (
 	// DefaultConfigMap defines the default name of the configMap containing custom CA
 	DefaultConfigMap = "custom-ca"
 )
-
-type patchOperation struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value, omitempty"`
-}
 
 func init() {
 	// log as JSON
@@ -54,22 +43,51 @@ func init() {
 	log.SetLevel(log.InfoLevel)
 }
 
-func initialize(pod *corev1.Pod) {
+func checkAnnotations(pod *corev1.Pod) (*injection, error) {
+	in := injection{
+		injectPem: false,
+		injectJks: false,
+	}
+
+	// Check if any annotation present at all
 	if pod.ObjectMeta.Annotations == nil {
-		pod.ObjectMeta.Annotations = make(map[string]string)
+		return &in, nil
 	}
-	if _, ok := pod.ObjectMeta.Annotations[AnnotationImage]; !ok {
-		pod.ObjectMeta.Annotations[AnnotationImage] = DefaultInitContainerImage
+
+	// Check if annotation for injecting PEM ca is present
+	if extrInjectPem, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInject]; ok {
+		// Check annotation for injecting PEM is false
+		injectPem, err := strconv.ParseBool(extrInjectPem)
+		if err != nil {
+			return nil, err
+		}
+		in.injectPem = injectPem
 	}
-	if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMap]; !ok {
-		pod.ObjectMeta.Annotations[AnnotationConfigMap] = DefaultConfigMap
+
+	// Check if annotation for injecting JKS ca is present
+	if extrInjectJks, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInject]; ok {
+		// Check annotation for injecting JKS is false
+		injectJks, err := strconv.ParseBool(extrInjectJks)
+		if err != nil {
+			return nil, err
+		}
+		in.injectPem = injectJks
 	}
-	if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInject]; !ok {
-		pod.ObjectMeta.Annotations[AnnotationCaPemInject] = DefaultInjectPem
+	if in.injectPem || in.injectJks {
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationImage]; !ok {
+			pod.ObjectMeta.Annotations[AnnotationImage] = DefaultInitContainerImage
+		}
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMap]; !ok {
+			pod.ObjectMeta.Annotations[AnnotationConfigMap] = DefaultConfigMap
+		}
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInject]; !ok {
+			pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath] = DefaultInjectPemPath
+		}
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaJksInject]; !ok {
+			pod.ObjectMeta.Annotations[AnnotationCaJksInjectPath] = DefaultInjectJksPath
+		}
 	}
-	if _, ok := pod.ObjectMeta.Annotations[AnnotationCaJksInject]; !ok {
-		pod.ObjectMeta.Annotations[AnnotationCaJksInject] = DefaultInjectJks
-	}
+	return &in, nil
 }
 
 // based on annotations check if the pod requires mutations
@@ -166,7 +184,7 @@ func addVolume(target []corev1.Volume, added []corev1.Volume, basePath string) (
 	return patch
 }
 
-func injectPem(pod corev1.Pod) []patchOperation {
+func injectPemCA(pod *corev1.Pod) []patchOperation {
 	// define volumeMounts for all the application containers
 	var volumeMounts []corev1.VolumeMount
 	// define volumes
@@ -186,7 +204,7 @@ func injectPem(pod corev1.Pod) []patchOperation {
 		VolumeSource: corev1.VolumeSource{
 			ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: pod.ObjectMeta.Annotations[AnnotationConfigMap],
+					Name: (*pod).ObjectMeta.Annotations[AnnotationConfigMap],
 				},
 				Items: []corev1.KeyToPath{
 					{
@@ -197,18 +215,18 @@ func injectPem(pod corev1.Pod) []patchOperation {
 				},
 			},
 		}})
-	patch = append(patch, addVolume(pod.Spec.Volumes, volumes, "/spec/volumes")...)
-	for i, cont := range pod.Spec.Containers {
+	patch = append(patch, addVolume((*pod).Spec.Volumes, volumes, "/spec/volumes")...)
+	for i, cont := range (*pod).Spec.Containers {
 		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
 	}
-	for i, cont := range pod.Spec.InitContainers {
+	for i, cont := range (*pod).Spec.InitContainers {
 		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
 	}
 	log.Info(patch)
 	return patch
 }
 
-func injectJks(pod corev1.Pod) []patchOperation {
+func injectJksCA(pod *corev1.Pod) []patchOperation {
 	// define patch operations
 	var patch []patchOperation
 	// defines read-only permission for mounting the CA
@@ -225,7 +243,7 @@ func injectJks(pod corev1.Pod) []patchOperation {
 	})
 	initContainers := append([]corev1.Container{}, corev1.Container{
 		Name:  "generate-jks-truststore",
-		Image: pod.ObjectMeta.Annotations[AnnotationImage],
+		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
 		Command: []string{
 			"sh",
 			"-c",
@@ -243,7 +261,7 @@ func injectJks(pod corev1.Pod) []patchOperation {
 		},
 	},
 	)
-	patch = append(patch, addVolume(pod.Spec.Volumes, volumes, "/spec/volumes")...)
+	patch = append(patch, addVolume((*pod).Spec.Volumes, volumes, "/spec/volumes")...)
 	for i, cont := range pod.Spec.Containers {
 		patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", i))...)
 	}
@@ -252,7 +270,7 @@ func injectJks(pod corev1.Pod) []patchOperation {
 			patch = append(patch, addVolumeMounts(cont.VolumeMounts, volumeMounts, fmt.Sprintf("/spec/initContainers/%d/volumeMounts", i))...)
 		}
 	}
-	patch = append(patch, addContainer(pod.Spec.InitContainers, initContainers, "/spec/initContainers")...)
+	patch = append(patch, addContainer((*pod).Spec.InitContainers, initContainers, "/spec/initContainers")...)
 
 	log.Info(patch)
 	return patch
@@ -263,32 +281,29 @@ func Mutate(body []byte) ([]byte, error) {
 	// define patch operations
 	var patch []patchOperation
 
-	var ppod *corev1.Pod
+	var pod *corev1.Pod
 	var ar *v1beta1.AdmissionReview
 	var err error
 
-	if ppod, ar, err = requireMutation(body); err != nil {
+	if pod, ar, err = requireMutation(body); err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
 	// define the response that we will need to send back to K8S API
 	arResponse := v1beta1.AdmissionResponse{}
 
-	// Initialize Pod
-	initialize(ppod)
-
-	// Get the Pod value from Pointer
-	pod := *ppod
-
-	// if custom PKI PEM injection is annotated:
-	// mount ConfigMap Volume containing CA Bundle to the Pod, add volumeMounts to all containers
-	if pod.ObjectMeta.Annotations[AnnotationCaPemInject] == "true" {
-		patch = append(patch, injectPem(pod)...)
+	in, err := checkAnnotations(pod) 
+	if err != nil {
+		log.Error(err.Error())
 	}
 
-	if pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "true" {
-		patch = append(patch, injectJks(pod)...)
+	if (*in).injectPem {
+		patch = append(patch, injectPemCA(pod)...)
 	}
+	if (*in).injectJks {
+		patch = append(patch, injectJksCA(pod)...)
+	}
+
 
 	// Create the AdmissionReview.Response
 	arResponse.Patch, err = json.Marshal(patch)
@@ -299,9 +314,6 @@ func Mutate(body []byte) ([]byte, error) {
 	arResponse.UID = ar.Request.UID
 	patchType := v1beta1.PatchTypeJSONPatch
 	arResponse.PatchType = &patchType
-	arResponse.AuditAnnotations = map[string]string{
-		"jksTruststore": "injected",
-	}
 
 	// Populate AdmissionReview with the Response
 	ar.Response = &arResponse
