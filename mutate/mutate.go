@@ -248,8 +248,8 @@ func injectJksCA(pod *corev1.Pod) []patchOperation {
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
 		Command: []string{
 			"sh",
-			"-c",
-			"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts keytool -import -alias customca -file /pem/tls-ca-bundle.pem -storetype JKS -storepass changeit -noprompt -keystore /jks/cacerts && chmod 400 /jks/cacerts",
+			"-xc",
+			"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts && keytool -import -alias customca -file /pem/tls-ca-bundle.pem -storetype JKS -storepass changeit -noprompt -keystore /jks/cacerts && chmod 400 /jks/cacerts",
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
