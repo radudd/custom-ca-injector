@@ -1,14 +1,14 @@
-# About
+= About
 
 This Kubernetes MutatingWebhook provides a the possibility to append custom CA certificates to the pod's trusted CA config. You can inject your custom CA to both the Pod's PEM trusted CA store or JKS truststore.
 The only prerequisite is to have a configMap containing your list of CA trust certicicates in PEM format(incl. custom ones) in the same project where you want to inject it to the pods.  
 Then you can define by pod annotations which trustore you want to inject(PEM or JKS), the paths on the containers where the trustsore should be stored, the name of the configmap containing the custom CA.
 
-# Usage
+= Usage
 
 As I will rely on some OpenShift specific automations, like the signing of service SSL certificates or creation of configMaps containing cluster wide CA configuration, I will follow the deployment steps for OpenShift. I will emphasise however, what needs to be adjusted in case the deployment is on vanilla K8S. 
 
-## Injector deployment
+== Injector deployment
 
 First create the namespace where you want to deploy the injector application
 
@@ -33,7 +33,7 @@ To achieve this, use the following script (adjust webhook name if necessary):
 
 NOTE: If you are deploying to vanilla K8S, you can use the following Github project: https://github.com/newrelic/k8s-webhook-cert-manager. This automates generation of the SSL certificates for injector and the configuration of the MutatingWebhookConfiguration with the CA used to sign the certificates.
 
-## CA injection
+== CA injection
 
 First go to the namespace where we want the pods to have custom ca injected. We will create a new one:
 
@@ -51,6 +51,9 @@ In OpenShift this can be easily created using an empty configMap labeled with `c
 If you are using vanilla K8S, just create a configmap containing the trusted CAs manually. The key in the configMap where the CA list is mapped should be called *ca-bundle.crt*
 
 Let's deploy now a test application. We will use a a dummy Quarkus Hello World application. Let's assume that we will need to inject both JKS and PEM custom certificates.
+
+NOTE: Injecting JKS custom certicates will inject also the PEMs, so for our example we will need to annotate only with `custompki.openshift.io/inject-jks: 'true'`
+
 To trigger the injections, we need to annotate the pods in the deployment. 
 
 ----
@@ -87,5 +90,3 @@ The available annotations are listed below:
 |custom-ca
 |The name of the configMap containing the trusted CAs in PEM format. This need to be created in advance
 |===
-
-NOTE: Injecting JKS custom certicates will inject also the PEMs, so for our example we will need to annotate only with `custompki.openshift.io/inject-jks: 'true'`
