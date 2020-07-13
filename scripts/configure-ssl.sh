@@ -15,4 +15,4 @@ EOF
 caBundle=$(oc get cm cacert -o jsonpath='{.data.service-ca\.crt}'|base64)
 
 # Update the MutatingWebhookConfig
-oc patch "${kind:-mutatingwebhookconfiguration}" custom-ca-injector-1 --type='json' -p "[{'op': 'add', 'path': '/webhooks/0/clientConfig/caBundle', 'value':'${caBundle}'}]"
+oc patch "${kind:-mutatingwebhookconfiguration}" custom-ca-injector --type='json' -p "[{'op': 'add', 'path': '/webhooks/0/clientConfig/caBundle', 'value':'${caBundle}'}]"
