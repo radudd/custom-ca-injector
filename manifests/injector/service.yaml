@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: custom-ca-injector
+  namespace: custom-ca-injector
+  labels:
+    app: custom-ca-injector
+    app.kubernetes.io/component: custom-ca-injector
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: ca-injector
+spec:
+  ports:
+    - name: 443-tcp
+      protocol: TCP
+      port: 443
+      targetPort: 8443
+  selector:
+    app: custom-ca-injector
+  type: ClusterIP

@@ -1,7 +1,7 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: custom-ca-injector
+  name: custom-ca-injector-1
 webhooks:
 - admissionReviewVersions:
   - v1beta1
@@ -16,7 +16,7 @@ webhooks:
   name: custompki.openshift.io
   namespaceSelector:
     matchLabels:
-      role: custom-pki
+      inject: custom-pki
   objectSelector: {}
   reinvocationPolicy: Never
   rules:

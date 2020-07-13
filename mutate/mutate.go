@@ -62,7 +62,7 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectPem = injectPem
-		log.Info("Pod " + pod.ObjectMeta.Namespace + "/" + pod.ObjectMeta.Name + "-> inject-pem: " + extrInjectPem)
+		log.Info("Pod " + pod.GetName() + "-> inject-pem: " + extrInjectPem)
 	}
 
 	// Check if annotation for injecting JKS ca is present
@@ -73,7 +73,7 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectJks = injectJks
-		log.Info("Pod " + pod.ObjectMeta.Namespace + "/" + pod.ObjectMeta.Name + "-> inject-jks: " + extrInjectJks)
+		log.Info("Pod " + pod.GetName() + "-> inject-jks: " + extrInjectJks)
 	}
 	if in.injectPem || in.injectJks {
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationImage]; !ok {

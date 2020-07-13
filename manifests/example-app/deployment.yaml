@@ -1,0 +1,25 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: quarkus-hello
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: quarkus-hello
+  template:
+    metadata:
+      labels:
+        app: quarkus-hello
+      annotations:
+        custompki.openshift.io/inject-jks: 'true'
+    spec:
+      containers:
+        - name: quarkus-hello
+          image: 'quay.io/radudd/quarkus-hello:latest'
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          imagePullPolicy: Always
+  strategy:
+    type: RollingUpdate

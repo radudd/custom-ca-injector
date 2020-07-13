@@ -1,0 +1,34 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: custom-ca-injector
+  namespace: custom-ca-injector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-ca-injector
+  template:
+    metadata:
+      labels:
+        app: custom-ca-injector
+    spec:
+      volumes:
+        - name: custom-ca-injector-1
+          secret:
+            secretName: injector-ssl-certs
+            defaultMode: 420
+      serviceAccount: ca-injector
+      containers:
+        - name: custom-ca-injector
+          image: quay.io/radudd/custom-ca-injector:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8443
+              protocol: TCP
+          volumeMounts:
+            - name: custom-ca-injector-1
+              mountPath: /ssl
+  strategy:
+    type: RollingUpdate

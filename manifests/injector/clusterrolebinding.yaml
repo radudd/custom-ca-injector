@@ -8,5 +8,5 @@ roleRef:
   name: custom-ca-injector
 subjects:
 - kind: ServiceAccount
-  name: default
-  namespace: ca-injector
+  name: ca-injector
+  namespace: custom-ca-injector
