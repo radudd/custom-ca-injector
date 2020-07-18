@@ -4,7 +4,7 @@ IMAGE_TAG  ?= $$(git log --abbrev-commit --format=%h -s | head -n 1)
 
 build:
 	echo "Building app"
-	go build -v -o ${IMAGE_NAME} ./main.go
+	go build -mod=vendor -v -o ${IMAGE_NAME} ./cmd/custom-ca-injector/main.go
     
 test:
 	echo "Running the tests for $(IMAGE_NAME)..."
@@ -14,7 +14,7 @@ image: build-image push-image
 
 build-image: build
 	echo "Building the docker image: $(IMAGE_REPO)/$(IMAGE_NAME):$(IMAGE_TAG)..."
-	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(IMAGE_TAG) -f Dockerfile .
+	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(IMAGE_TAG) -f build/Dockerfile .
 
 push-image: build-image
 	echo "Pushing the docker image for $(IMAGE_REPO)/$(IMAGE_NAME):$(IMAGE_TAG) and $(IMAGE_REPO)/$(IMAGE_NAME):latest..."

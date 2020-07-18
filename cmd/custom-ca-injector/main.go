@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/radudd/custom-ca-inject/mutate"
+	"github.com/radudd/custom-ca-inject/pkg/mutate"
 )
 
 func handleMutate(w http.ResponseWriter, r *http.Request) {
