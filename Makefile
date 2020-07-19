@@ -2,13 +2,14 @@ IMAGE_REPO ?= quay.io/radudd/custom-ca-injector
 IMAGE_NAME ?= custom-ca-injector
 IMAGE_TAG  ?= $$(git log --abbrev-commit --format=%h -s | head -n 1)
 
+.PHONY: all build clean
 build:
 	echo "Building app"
 	go build -mod=vendor -v -o ${IMAGE_NAME} ./cmd/custom-ca-injector/main.go
     
 test:
 	echo "Running the tests for $(IMAGE_NAME)..."
-	go test ./...
+	go test ./pkg/mutate
 
 image: build-image push-image
 
