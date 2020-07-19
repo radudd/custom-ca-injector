@@ -13,7 +13,7 @@ RUN apk add git make openssl
 
 # Test and build 
 WORKDIR /build
-COPY . /build
+COPY . .
 RUN make test
 RUN make build
 
