@@ -9,7 +9,7 @@ build:
     
 test:
 	echo "Running the tests for $(IMAGE_NAME)..."
-	go test ./pkg/mutate
+	go test ./...
 
 image: build-image push-image
 
