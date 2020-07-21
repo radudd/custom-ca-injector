@@ -1,12 +1,11 @@
 package mutate
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	v1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 )
 
 func TestMutatesValidRequest(t *testing.T) {
@@ -130,9 +129,12 @@ func TestMutatesValidRequest(t *testing.T) {
 		t.Errorf("failed to mutate AdmissionRequest %s with error %s", string(response), err)
 	}
 
-	r := v1beta1.AdmissionReview{}
-	err = json.Unmarshal(response, &r)
-	assert.NoError(t, err, "failed to unmarshal with error %s", err)
+	//reviewGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
+	objAr, _, err := codecs.UniversalDeserializer().Decode(response, nil, nil)
+
+	assert.NoError(t, err, "decoding failed %s", err)
+	r, _ := objAr.(*admissionv1beta1.AdmissionReview)
+	//assert.NoError(t, err, "conversion failed %s", err)
 
 	rr := r.Response
 	assert.Equal(t, `[{"op":"add","path":"/spec/volumes/-","value":{"name":"trusted-ca-pem","configMap":{"name":"custom-ca","items":[{"key":"ca-bundle.crt","path":"tls-ca-bundle.pem","mode":256}]}}},{"op":"add","path":"/spec/containers/0/volumeMounts/-","value":{"name":"trusted-ca-pem","readOnly":true,"mountPath":"/etc/pki/ca-trust/extracted/pem"}}]`, string(rr.Patch))

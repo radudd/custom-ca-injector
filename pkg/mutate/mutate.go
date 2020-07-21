@@ -114,9 +114,12 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 
 	//ar := admissionv1beta1.AdmissionReview{}
 	//err := json.Unmarshal(body, &ar)
-	reviewGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
-	objAr, _, err := codecs.UniversalDeserializer().Decode(body, &reviewGVK, &admissionv1beta1.AdmissionReview{})
+
+	//reviewGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
+	objAr, _, err := codecs.UniversalDeserializer().Decode(body, nil, nil)
+	//objAr, _, err := codecs.UniversalDeserializer().Decode(body, &reviewGVK, &admissionv1beta1.AdmissionReview{})
 	if err != nil {
+		//return nil, nil, fmt.Printf("Decoding failed with error %v", objAr)
 		return nil, nil, fmt.Errorf("Decoding failed with error %v", err)
 	}
 	ar, ok := objAr.(*admissionv1beta1.AdmissionReview); if !ok {
