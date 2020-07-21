@@ -14,14 +14,14 @@ func handleMutate(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		//log.Fatal(err)
+		log.Fatal(err)
 		responsewriters.InternalError(w, r, fmt.Errorf("Failed to read body: %v", err))
 		return
 	}
 
 	mutated, err := mutate.Mutate(body)
 	if err != nil {
-		//log.Fatal(err)
+		log.Fatal(err)
 		responsewriters.InternalError(w, r, fmt.Errorf("Failed mutation: %v", err))
 		return
 	}
