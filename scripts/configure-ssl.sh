@@ -5,14 +5,14 @@ cat <<EOF | oc apply -f -
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: cacert
+  name: service-cacert
   namespace: custom-ca-injector
   annotations:
     service.beta.openshift.io/inject-cabundle: 'true'
 EOF
 
 # Extract OpenShift CA and base64
-caBundle=$(oc get cm cacert -o jsonpath='{.data.service-ca\.crt}'|base64)
+caBundle=$(oc get cm service-cacert -n custom-ca-injector -o jsonpath='{.data.service-ca\.crt}'|base64)
 
 # Update the MutatingWebhookConfig
 oc patch "${kind:-mutatingwebhookconfiguration}" custom-ca-injector --type='json' -p "[{'op': 'add', 'path': '/webhooks/0/clientConfig/caBundle', 'value':'${caBundle}'}]"

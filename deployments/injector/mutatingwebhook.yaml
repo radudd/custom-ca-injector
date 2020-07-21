@@ -1,7 +1,7 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: custom-ca-injector-1
+  name: custom-ca-injector
 webhooks:
 - admissionReviewVersions:
   - v1beta1
