@@ -323,6 +323,9 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
 	// define patch operations
+
+	log.Info("Calling /mutate")
+
 	var patch []*jsonpatch.JsonPatchOperation
 
 	var pod *corev1.Pod
