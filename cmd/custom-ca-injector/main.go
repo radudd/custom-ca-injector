@@ -1,27 +1,32 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
-	"github.com/radudd/custom-ca-inject/internal/mutate"
+	"github.com/radudd/custom-ca-inject/pkg/mutate"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 )
 
 func handleMutate(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		log.Fatal(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		//log.Fatal(err)
+		responsewriters.InternalError(w, r, fmt.Errorf("Failed to read body: %v"))
+		return
 	}
 
 	mutated, err := mutate.Mutate(body)
 	if err != nil {
-		log.Fatal(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		//log.Fatal(err)
+		responsewriters.InternalError(w, r, fmt.Errorf("Failed mutation: %v"))
+		return
 	}
-	w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
+	responsewriters.WriteRawJSON(http.StatusOK, nil, w)
 	w.Write(mutated)
 }
 
