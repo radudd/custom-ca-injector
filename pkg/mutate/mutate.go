@@ -343,9 +343,12 @@ func Mutate(body []byte) ([]byte, error) {
 	if (*in).injectJks {
 		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)
+		log.Info("Mutating: injecting jks and pem to " + pod.Name)
 	}
 	if !(*in).injectJks && (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
+		log.Info("Mutating: injecting pem to " + pod.Name)
+	}
 	}
 
 	// Create the AdmissionReview.Response
