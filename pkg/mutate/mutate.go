@@ -347,14 +347,14 @@ func Mutate(body []byte) ([]byte, error) {
 	}
 	if !(*in).injectJks && (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Info("Mutating: injecting pem to " + pod.Name)
-	}
+		log.Info("Mutating: injecting jks and pem to " + pod.Name)
 	}
 
 	// Create the AdmissionReview.Response
 	arResponse.Patch, err = json.Marshal(patch)
 	arResponse.Result = &metav1.Status{
-		Status: "Success",
+		Message : "Success",
+		Status  : metav1.StatusSuccess,
 	}
 	arResponse.Allowed = true
 	arResponse.UID = ar.Request.UID
