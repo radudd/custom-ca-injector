@@ -21,7 +21,7 @@ spec:
       serviceAccount: ca-injector
       containers:
         - name: custom-ca-injector
-          image: quay.io/radudd/custom-ca-injector:latest
+          image: quay.io/radudd/custom-ca-injector:master
           ports:
             - containerPort: 8080
               protocol: TCP
