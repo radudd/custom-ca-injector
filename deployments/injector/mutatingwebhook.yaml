@@ -1,14 +1,14 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: custom-ca-injector
+  name: custom-ca-injector-pki
 webhooks:
 - admissionReviewVersions:
   - v1beta1
   clientConfig:
     service:
       name: custom-ca-injector
-      namespace: custom-ca-injector
+      namespace: custom-pki
       path: /mutate
       port: 443
   failurePolicy: Ignore

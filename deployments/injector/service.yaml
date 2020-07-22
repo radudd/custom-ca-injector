@@ -2,7 +2,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: custom-ca-injector
-  namespace: custom-ca-injector
   labels:
     app: custom-ca-injector
     app.kubernetes.io/component: custom-ca-injector
