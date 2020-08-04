@@ -60,6 +60,8 @@ To trigger the injections, we need to annotate the pods in the deployment.
 oc apply -f deployments/example-app
 ----
 
+> :warning: When injecting JKS there is currently a limitation in the sense that only the first certificate listed in the PEM trust-store is added to trusted JKS certificate. Fix will follow.
+
 The available annotations are listed below:
 
 .Annotations
@@ -91,4 +93,4 @@ The available annotations are listed below:
 |The name of the configMap containing the trusted CAs in PEM format. This need to be created in advance
 |===
 
-> :warning: When injecting JKS there is currently a limitation in the sense that only the first certificate listed in the PEM trust-store is added to trusted JKS certificate. Fix will follow.
+
