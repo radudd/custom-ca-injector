@@ -90,3 +90,5 @@ The available annotations are listed below:
 |custom-ca
 |The name of the configMap containing the trusted CAs in PEM format. This need to be created in advance
 |===
+
+> :warning: When injecting JKS there is currently a limitation in the sense that only the first certificate listed in the PEM trust-store is added to trusted JKS certificate. Fix will follow.
