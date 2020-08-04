@@ -53,8 +53,8 @@ If you are using vanilla K8S, just create a configmap containing the trusted CAs
 Let's deploy now a test application. We will use a a dummy Quarkus Hello World application. Let's assume that we will need to inject both JKS and PEM custom certificates.
 
 NOTE: Injecting JKS custom certicates will inject also the PEMs, so for our example we will need to annotate only with `custompki.openshift.io/inject-jks: 'true'`
-| WARNING: When injecting JKS there is currently a limitation in the sense that only the first certificate listed in the PEM trust-store is added to trusted JKS certificate. Fix will follow.|
-| --- |
+
+WARNING: When injecting JKS there is currently a limitation in the sense that only the first certificate listed in the PEM trust-store is added to trusted JKS certificate. Fix will follow.
 
 To trigger the injections, we need to annotate the pods in the deployment. 
 
