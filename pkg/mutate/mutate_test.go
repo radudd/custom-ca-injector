@@ -129,11 +129,11 @@ func TestMutatesValidRequest(t *testing.T) {
 		t.Errorf("failed to mutate AdmissionRequest %s with error %s", string(response), err)
 	}
 
-	//reviewGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
-	objAr, _, err := codecs.UniversalDeserializer().Decode(response, nil, nil)
+	arGWK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
+	arObj, _, err := codecs.UniversalDeserializer().Decode(response, &arGWK, &admissionv1beta1.AdmissionReview{})
 
 	assert.NoError(t, err, "decoding failed %s", err)
-	r, _ := objAr.(*admissionv1beta1.AdmissionReview)
+	r, _ := arObj.(*admissionv1beta1.AdmissionReview)
 	//assert.NoError(t, err, "conversion failed %s", err)
 
 	rr := r.Response
