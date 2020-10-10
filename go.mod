@@ -9,5 +9,5 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.1.0 // indirect
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
-	k8s.io/apiserver v0.18.6
+	k8s.io/apiserver v0.18.6 // indirect
 )
