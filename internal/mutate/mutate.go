@@ -30,6 +30,9 @@ const (
 
 	// DefaultConfigMap defines the default name of the configMap containing custom CA
 	DefaultConfigMap = "custom-ca"
+
+	// DefaultConfigMap defines the Regex for CNs to be added to the merged CA
+	DefaultRegexCn = "."
 )
 
 func init() {
@@ -81,6 +84,9 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 		}
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMap]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationConfigMap] = DefaultConfigMap
+		}
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationRegexCn]; !ok {
+			pod.ObjectMeta.Annotations[AnnotationRegexCn] = DefaultRegexCn
 		}
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath] = DefaultInjectPemPath
@@ -248,7 +254,15 @@ func injectJksCA(pod *corev1.Pod) []patchOperation {
 		Command: []string{
 			"sh",
 			"-c",
-			"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts && keytool -import -alias customca -file /pem/tls-ca-bundle.pem -storetype JKS -storepass changeit -noprompt -keystore /jks/cacerts && chmod 400 /jks/cacerts",
+			fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && \
+				chmod 644 /jks/cacerts && \
+				csplit -z -f /tmp/crt- $PEM_FILE '/-----BEGIN CERTIFICATE-----/' '{*}' &> /dev/null && \
+				for file in /tmp/crt*; do
+				  echo \"Probing $file\" && \
+				    keytool -printcert -file $file |egrep -i %s && \
+				    keytool -noprompt -import -trustcacerts -file $file -alias $file -keystore /jks/cacerts -storepass changeit
+			     done && \
+			     chmod 400 /jks/cacerts`, pod.ObjectMeta.Annotations[AnnotationRegexCn]),
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
