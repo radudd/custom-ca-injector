@@ -20,7 +20,7 @@ spec:
       serviceAccount: ca-injector
       containers:
         - name: custom-ca-injector
-          image: quay.io/radudd/custom-ca-injector:master
+          image: quay.io/radudd/custom-ca-injector:k8s-style
           ports:
             - containerPort: 8443
               protocol: TCP
