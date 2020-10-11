@@ -347,8 +347,6 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
-	log.Info("Calling /mutate")
-
 	// define patch operations
 	var patch []*jsonpatch.JsonPatchOperation
 
@@ -356,12 +354,11 @@ func Mutate(body []byte) ([]byte, error) {
 	var err error
 	var ar *admissionv1beta1.AdmissionReview
 
-	log.Info("Unwraping pod definition")
 	if pod, ar, err = requireMutation(body); err != nil {
 		log.Error(err.Error())
 		return nil, err
 	}
-	log.Info("Mutation requested from " +  pod.GetObjectMeta().GetName())
+	log.Info("Mutating: Request received from " +  pod.GetObjectMeta().GetName())
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
@@ -376,7 +373,7 @@ func Mutate(body []byte) ([]byte, error) {
 	}
 	if !(*in).injectJks && (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Info("Mutating: injecting jks and pem to " + pod.GetObjectMeta().GetName())
+		log.Info("Mutating: injecting pem to " + pod.GetObjectMeta().GetName())
 	}
 
 	// Create the AdmissionReview.Response
