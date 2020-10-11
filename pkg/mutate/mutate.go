@@ -124,7 +124,7 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	log.SetLevel(logLevel)
 	*/
 
-	log.SetLevel(logLevel)
+	log.SetLevel(log.InfoLevel)
 	return &in, nil
 
 }
