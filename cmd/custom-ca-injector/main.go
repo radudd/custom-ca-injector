@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -35,5 +36,8 @@ func handleMutate(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/mutate", handleMutate)
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{"status": "UP"})
+	})
 	log.Fatal(http.ListenAndServeTLS(":8443", "/ssl/tls.crt", "/ssl/tls.key", nil))
 }
