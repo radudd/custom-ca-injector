@@ -137,14 +137,11 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 	//arGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
 	//arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
 
-	arObj, _, err := codecs.UniversalDeserializer().Decode(body, nil, &admissionv1beta1.AdmissionReview{})
+	var err error
+	ar := &admissionv1beta1.AdmissionReview{}
+	_, _, err = codecs.UniversalDeserializer().Decode(body, nil, ar)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Decoding failed with error: %v", err)
-	}
-
-	ar, ok := arObj.(*admissionv1beta1.AdmissionReview)
-	if !ok {
-		return nil, nil, fmt.Errorf("AdmissionReview conversion failed with error %v", err)
 	}
 
 	// MutationWebhook is watching for Pods, hence when this is triggered
@@ -159,7 +156,8 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 	//podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
 	//podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, &podGVK, &corev1.Pod{})
 
-	podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, nil, &corev1.Pod{})
+	pod := &corev1.Pod{}
+	_, _, err = codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, nil, pod)
 	if err != nil {
 		//ar.Response.Result = &metav1.Status{
 		//	Message: fmt.Sprintf("unexpected type %T", ar.Request.Object.Object),
@@ -167,15 +165,6 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 		//}
 		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
 	}
-	pod, ok := podObj.(*corev1.Pod)
-	if !ok {
-		//ar.Response.Result = &metav1.Status{
-		//	Message: fmt.Sprintf("runtime object cannot be converted to pod"),
-		//	Status:  metav1.StatusFailure,
-		//}
-		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
-	}
-
 	if pod.ObjectMeta.Annotations[AnnotationCaPemInject] == "false" && pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "false" {
 		return nil, nil, fmt.Errorf("Pod is not marked for Custom CA injection")
 	}
