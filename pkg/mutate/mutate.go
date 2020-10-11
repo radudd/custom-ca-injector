@@ -131,11 +131,13 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 // returns a Pod object extracted from the Admission Review request if mutation is required
 // returns also an error object
 func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionReview, error) {
-	// Let's create the AdmissionReview and load the request body into
-	arGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
-
 	log.Debug(string(body))
-	arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
+
+	// Let's create the AdmissionReview and load the request body into
+	//arGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
+	//arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
+
+	arObj, _, err := codecs.UniversalDeserializer().Decode(body, nil, &admissionv1beta1.AdmissionReview{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Decoding failed with error: %v", err)
 	}
@@ -154,8 +156,10 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 	}
 
 	// Now, let's Try to extract the Object.Raw from Admission Review Request and load it to a Pod
-	podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
-	podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, &podGVK, &corev1.Pod{})
+	//podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
+	//podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, &podGVK, &corev1.Pod{})
+
+	podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, nil, &corev1.Pod{})
 	if err != nil {
 		//ar.Response.Result = &metav1.Status{
 		//	Message: fmt.Sprintf("unexpected type %T", ar.Request.Object.Object),
@@ -344,9 +348,6 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
-	if !(*in).injectJks && (*in).injectPem {
-		return nil, 
-	}
 	// define patch operations
 	var patch []*jsonpatch.JsonPatchOperation
 
@@ -358,7 +359,7 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
-	log.Info("Mutating: Request received from " +  pod.GetObjectMeta().GetName())
+	log.Info("Mutating: Request received from " + pod.GetObjectMeta().GetName())
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
