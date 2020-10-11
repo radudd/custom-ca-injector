@@ -323,7 +323,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 				corev1.ResourceCPU: "0.5",
 				corev1.ResourceMemory: "1Gi",
 			},
-		}
+		},
 	},
 	)
 	patch = append(patch, addVolume((*pod).Spec.Volumes, volumes, "/spec/volumes")...)
