@@ -118,17 +118,16 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 	// Let's create the AdmissionReview and load the request body into
 	arGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
 
-	//scheme = runtime.NewScheme()
 	codecs = serializer.NewCodecFactory(scheme)
-
-	arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, nil)
-	//arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
+	log.Info(string(body))
+	arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Decoding failed with error: %v", err)
 	}
 
 	ar, ok := arObj.(*admissionv1beta1.AdmissionReview)
 	if !ok {
+		log.Info(ar)
 		return nil, nil, fmt.Errorf("AdmissionReview conversion failed with error %v", err)
 	}
 
@@ -144,18 +143,18 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 	podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
 	podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, &podGVK, &corev1.Pod{})
 	if err != nil {
-		ar.Response.Result = &metav1.Status{
-			Message: fmt.Sprintf("unexpected type %T", ar.Request.Object.Object),
-			Status:  metav1.StatusFailure,
-		}
+		//ar.Response.Result = &metav1.Status{
+		//	Message: fmt.Sprintf("unexpected type %T", ar.Request.Object.Object),
+		//	Status:  metav1.StatusFailure,
+		//}
 		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
 	}
 	pod, ok := podObj.(*corev1.Pod)
 	if !ok {
-		ar.Response.Result = &metav1.Status{
-			Message: fmt.Sprintf("runtime object cannot be converted to pod"),
-			Status:  metav1.StatusFailure,
-		}
+		//ar.Response.Result = &metav1.Status{
+		//	Message: fmt.Sprintf("runtime object cannot be converted to pod"),
+		//	Status:  metav1.StatusFailure,
+		//}
 		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
 	}
 
