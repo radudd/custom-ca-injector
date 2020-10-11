@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/appscode/jsonpatch"
 	log "github.com/sirupsen/logrus"
@@ -43,8 +44,20 @@ const (
 	DefaultRegexCn = "."
 
 	// Default LogLevel
-	DefaultLogLevel = "Info"
+	DefaultLogLevel = log.InfoLevel
 )
+
+func getLogLevel(key string, fallback log.Level) log.Level {
+	if value, ok := os.LookupEnv(key); ok {
+		var logLevel log.Level
+		logLevel, err := log.ParseLevel(strings.Title(value))
+		if err != nil {
+			logLevel = fallback
+		}
+		return logLevel
+	}
+	return fallback
+}
 
 func initialize(pod *corev1.Pod) (*injection, error) {
 
@@ -104,13 +117,10 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	// Output everything including stderr to stdout
 	log.SetOutput(os.Stdout)
 
-	logLevel := getEnv("LOG_LEVEL", DefaultLogLevel)
-	log.Info("LogLevel set to " + logLevel)
-
 	// set level
-	logrusLogLevel, _ := log.ParseLevel(logLevel)
-	
-	log.SetLevel(logrusLogLevel)
+	logLevel := getLogLevel("LOG_LEVEL", DefaultLogLevel)
+	log.Info("LogLevel set to " + logLevel.String())
+	log.SetLevel(logLevel)
 	return &in, nil
 }
 

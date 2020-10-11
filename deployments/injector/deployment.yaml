@@ -28,5 +28,8 @@ spec:
           volumeMounts:
             - name: custom-ca-injector-1
               mountPath: /ssl
+          environment:
+            - key: LOG_LEVEL
+              value: Debug
   strategy:
     type: RollingUpdate
