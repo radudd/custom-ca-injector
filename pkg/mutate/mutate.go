@@ -52,7 +52,7 @@ func getLogLevel(key string, fallback log.Level) log.Level {
 		var logLevel log.Level
 		logLevel, err := log.ParseLevel(strings.Title(value))
 		if err != nil {
-			logLevel = fallback
+			return fallback
 		}
 		return logLevel
 	}
@@ -299,7 +299,8 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 			"-xc",
 			fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && \
 				chmod 644 /jks/cacerts && \
-				csplit -z -f /tmp/crt- $PEM_FILE '/-----BEGIN CERTIFICATE-----/' '{*}' &> /dev/null && \
+				csplit -z -f /tmp/crt- $PEM_FILE '/-----BEGIN CERTIFICATE-----/' '{*}' && \
+				#csplit -z -f /tmp/crt- $PEM_FILE '/-----BEGIN CERTIFICATE-----/' '{*}' &> /dev/null && \
 				for file in /tmp/crt*; do
 				  echo \"Probing $file\" && \
 				    keytool -printcert -file $file |egrep -i %s && \
