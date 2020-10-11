@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 )
 
 var (
@@ -42,24 +41,14 @@ const (
 
 	// DefaultConfigMap defines the Regex for CNs to be added to the merged CA
 	DefaultRegexCn = "."
+
+	// Default LogLevel
+	DefaultLogLevel = "Info"
 )
 
-func init() {
-	// log as JSON
-	log.SetFormatter(&log.JSONFormatter{})
+func initialize(pod *corev1.Pod) (*injection, error) {
 
-	// Output everything including stderr to stdout
-	log.SetOutput(os.Stdout)
-
-	// set level
-	log.SetLevel(log.InfoLevel)
-
-	// init scheme and codec factory
-	utilruntime.Must(admissionv1beta1.AddToScheme(scheme))
 	//install.Install(scheme)
-}
-
-func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 	in := injection{
 		injectPem: false,
 		injectJks: false,
@@ -108,6 +97,19 @@ func checkAnnotations(pod *corev1.Pod) (*injection, error) {
 			pod.ObjectMeta.Annotations[AnnotationCaJksInjectPath] = DefaultInjectJksPath
 		}
 	}
+
+	// log as JSON
+	log.SetFormatter(&log.JSONFormatter{})
+
+	// Output everything including stderr to stdout
+	log.SetOutput(os.Stdout)
+
+	logLevel := getEnv("LOG_LEVEL", DefaultLogLevel)
+
+	// set level
+	logrusLogLevel, _ := log.ParseLevel(logLevel)
+	
+	log.SetLevel(logrusLogLevel)
 	return &in, nil
 }
 
@@ -118,8 +120,7 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 	// Let's create the AdmissionReview and load the request body into
 	arGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
 
-	codecs = serializer.NewCodecFactory(scheme)
-	log.Info(string(body))
+	log.Debug(string(body))
 	arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("Decoding failed with error: %v", err)
@@ -332,8 +333,6 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 func Mutate(body []byte) ([]byte, error) {
 	// define patch operations
 
-	log.Info("Calling /mutate")
-
 	var patch []*jsonpatch.JsonPatchOperation
 
 	var pod *corev1.Pod
@@ -344,10 +343,11 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
+	log.Info("Mutation requested from " + pod.ObjectMeta.GetNamespace() + "/" + pod.ObjectMeta.GetName())
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
-	in, err := checkAnnotations(pod)
+	in, err := initialize(pod)
 	if err != nil {
 		log.Error(err.Error())
 	}

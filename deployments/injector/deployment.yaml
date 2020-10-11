@@ -21,6 +21,7 @@ spec:
       containers:
         - name: custom-ca-injector
           image: quay.io/radudd/custom-ca-injector:k8s-style
+          imagePullPolicy: Always
           ports:
             - containerPort: 8443
               protocol: TCP
