@@ -118,10 +118,15 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	log.SetOutput(os.Stdout)
 
 	// set level
+	/*
 	logLevel := getLogLevel("LOG_LEVEL", DefaultLogLevel)
 	log.Info("LogLevel set to " + logLevel.String())
 	log.SetLevel(logLevel)
+	*/
+
+	log.SetLevel(logLevel)
 	return &in, nil
+
 }
 
 // based on annotations check if the pod requires mutations
