@@ -105,6 +105,7 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	log.SetOutput(os.Stdout)
 
 	logLevel := getEnv("LOG_LEVEL", DefaultLogLevel)
+	log.Info("LogLevel set to " + logLevel)
 
 	// set level
 	logrusLogLevel, _ := log.ParseLevel(logLevel)
@@ -331,8 +332,9 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
-	// define patch operations
+	log.Debug("Calling /mutate")
 
+	// define patch operations
 	var patch []*jsonpatch.JsonPatchOperation
 
 	var pod *corev1.Pod
