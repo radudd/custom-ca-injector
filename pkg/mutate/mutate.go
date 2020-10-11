@@ -80,7 +80,7 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectPem = injectPem
-		log.Info("Pod " + pod.GetName() + "-> inject-pem: " + extrInjectPem)
+		log.Info("Pod " + pod.GetObjectMeta().GetName() + "-> inject-pem: " + extrInjectPem)
 	}
 
 	// Check if annotation for injecting JKS ca is present
@@ -91,7 +91,7 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectJks = injectJks
-		log.Info("Pod " + pod.GetName() + "-> inject-jks: " + extrInjectJks)
+		log.Info("Pod " + pod.GetObjectMeta().GetName() + "-> inject-jks: " + extrInjectJks)
 	}
 	if in.injectPem || in.injectJks {
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationImage]; !ok {
@@ -361,7 +361,7 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
-	log.Info("Mutation requested from " + pod.ObjectMeta.GetNamespace() + "/" + pod.ObjectMeta.GetName())
+	log.Info("Mutation requested from " +  pod.GetObjectMeta().GetName())
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
@@ -372,11 +372,11 @@ func Mutate(body []byte) ([]byte, error) {
 	if (*in).injectJks {
 		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)
-		log.Info("Mutating: injecting jks and pem to " + pod.Name)
+		log.Info("Mutating: injecting jks and pem to " + pod.GetObjectMeta().GetName())
 	}
 	if !(*in).injectJks && (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Info("Mutating: injecting jks and pem to " + pod.Name)
+		log.Info("Mutating: injecting jks and pem to " + pod.GetObjectMeta().GetName())
 	}
 
 	// Create the AdmissionReview.Response
