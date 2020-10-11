@@ -135,7 +135,6 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 
 	// Let's create the AdmissionReview and load the request body into
 	//arGVK := admissionv1beta1.SchemeGroupVersion.WithKind("AdmissionReview")
-	//arObj, _, err := codecs.UniversalDeserializer().Decode(body, &arGVK, &admissionv1beta1.AdmissionReview{})
 
 	var err error
 	ar := &admissionv1beta1.AdmissionReview{}
@@ -154,7 +153,6 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 
 	// Now, let's Try to extract the Object.Raw from Admission Review Request and load it to a Pod
 	//podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
-	//podObj, _, err := codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, &podGVK, &corev1.Pod{})
 
 	pod := &corev1.Pod{}
 	_, _, err = codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, nil, pod)
@@ -298,7 +296,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
 		Command: []string{
 			"sh",
-			"-c",
+			"-xc",
 			fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && \
 				chmod 644 /jks/cacerts && \
 				csplit -z -f /tmp/crt- $PEM_FILE '/-----BEGIN CERTIFICATE-----/' '{*}' &> /dev/null && \
