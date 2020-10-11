@@ -118,13 +118,11 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	log.SetOutput(os.Stdout)
 
 	// set level
-	/*
 	logLevel := getLogLevel("LOG_LEVEL", DefaultLogLevel)
-	log.Info("LogLevel set to " + logLevel.String())
 	log.SetLevel(logLevel)
-	*/
+	log.Info("LogLevel set to " + logLevel.String())
 
-	log.SetLevel(log.InfoLevel)
+	//log.SetLevel(log.InfoLevel)
 	return &in, nil
 
 }
@@ -144,7 +142,6 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 
 	ar, ok := arObj.(*admissionv1beta1.AdmissionReview)
 	if !ok {
-		log.Info(ar)
 		return nil, nil, fmt.Errorf("AdmissionReview conversion failed with error %v", err)
 	}
 
@@ -347,6 +344,9 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
+	if !(*in).injectJks && (*in).injectPem {
+		return nil, 
+	}
 	// define patch operations
 	var patch []*jsonpatch.JsonPatchOperation
 
@@ -366,6 +366,7 @@ func Mutate(body []byte) ([]byte, error) {
 	if err != nil {
 		log.Error(err.Error())
 	}
+
 	if (*in).injectJks {
 		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)

@@ -2,9 +2,9 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: custom-ca-injector
-  annotations:
-    image.openshift.io/triggers: >-
-      [{"from":{"kind":"ImageStreamTag","name":"custom-ca-injector:k8s-style","namespace":"custom-ca-injector"},"fieldPath":"spec.template.spec.containers[?(@.name==\"custom-ca-injector\")].image","pause":"false"}]
+  #annotations:
+  #  image.openshift.io/triggers: >-
+  #    [{"from":{"kind":"ImageStreamTag","name":"custom-ca-injector:k8s-style","namespace":"custom-ca-injector"},"fieldPath":"spec.template.spec.containers[?(@.name==\"custom-ca-injector\")].image","pause":"false"}]
 spec:
   replicas: 1
   selector:

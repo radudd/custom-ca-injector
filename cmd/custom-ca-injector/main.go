@@ -26,7 +26,9 @@ func handleMutate(w http.ResponseWriter, r *http.Request) {
 			responsewriters.InternalError(w, r, fmt.Errorf("Failed mutation: %v", err))
 			return
 		}
-		responsewriters.WriteRawJSON(200, mutated, w)
+		//responsewriters.WriteRawJSON(200, mutated, w)
+		w.WriteHeader(http.StatusOK)
+		w.Write(mutated)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
