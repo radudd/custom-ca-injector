@@ -92,7 +92,6 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectJks = injectJks
-		log.Info("Pod " + pod.GetObjectMeta().GetName() + "-> inject-jks: " + extrInjectJks)
 	}
 	if in.injectPem || in.injectJks {
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationImage]; !ok {
