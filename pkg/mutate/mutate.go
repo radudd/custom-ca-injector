@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var (
@@ -319,9 +320,9 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 			},
 		},
 		Resources: corev1.ResourceRequirements{
-			Requests: {
-				corev1.ResourceCPU: "0.5",
-				corev1.ResourceMemory: "1Gi",
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU: resource.MustParse("500m"),
+				corev1.ResourceMemory: resource.MustParse("1Gi"),
 			},
 		},
 	},
