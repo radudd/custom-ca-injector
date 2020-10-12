@@ -22,31 +22,6 @@ var (
 	codecs = serializer.NewCodecFactory(scheme)
 )
 
-const (
-	// DefaultInjectPem defines
-	DefaultInjectPem = false
-
-	// DefaultInjectPemPath defines
-	DefaultInjectPemPath = "/etc/pki/ca-trust/extracted/pem"
-
-	// DefaultInjectJks defines
-	DefaultInjectJks = false
-
-	// DefaultInjectJksPath defines
-	DefaultInjectJksPath = "/etc/pki/ca-trust/extracted/java"
-
-	// DefaultInitContainerImage defines default image for init container
-	DefaultInitContainerImage = "docker.io/library/openjdk"
-
-	// DefaultConfigMap defines the default name of the configMap containing custom CA
-	DefaultConfigMap = "custom-ca"
-
-	// DefaultConfigMap defines the Regex for CNs to be added to the merged CA
-	DefaultRegexCn = "."
-
-	// Default LogLevel
-	DefaultLogLevel = log.InfoLevel
-)
 
 func getLogLevel(key string, fallback log.Level) log.Level {
 	if value, ok := os.LookupEnv(key); ok {
@@ -100,9 +75,6 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 		}
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMap]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationConfigMap] = DefaultConfigMap
-		}
-		if _, ok := pod.ObjectMeta.Annotations[AnnotationRegexCn]; !ok {
-			pod.ObjectMeta.Annotations[AnnotationRegexCn] = DefaultRegexCn
 		}
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath] = DefaultInjectPemPath
@@ -295,6 +267,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 	initContainers := append([]corev1.Container{}, corev1.Container{
 		Name:  "generate-jks-truststore",
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
+		/*
 		Command: []string{
 			"sh",
 			"-xc",
@@ -308,6 +281,26 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 				    keytool -noprompt -import -trustcacerts -file $file -alias $file -keystore /jks/cacerts -storepass changeit
 			     done && \
 			     chmod 400 /jks/cacerts`, pod.ObjectMeta.Annotations[AnnotationRegexCn]),
+		},
+		*/
+		Command: []string{
+			"sh",
+			"-xc",
+			`openssl pkcs12 -export -in /pem/tls-ca-bundle.pem \
+				-nokeys 
+				-out /tmp/cacert.p12 \
+				-name cacert \
+				-passin pass:changeit \ 
+				-passout pass:changeit && \
+			keytool -importkeystore 
+				-srckeystore /tmp/cacert.p12 
+				-srcstoretype PKCS12 \
+				-srcstorepass changeit \
+				-alias cacert \
+				-deststorepass changeit \
+				-destkeypass changeit \
+				-destkeystore /jks/cacerts \ &&
+			chmod 400 /jks/cacerts`,
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
