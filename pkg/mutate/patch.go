@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/appscode/jsonpatch"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -151,7 +152,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 		Command: []string{
 			"sh",
 			"-xc",
-			"openssl pkcs12 -export -in /pem/tls-ca-bundle.pem -nokeys -out /tmp/cacert.p12 -name cacert -passin pass:changeit -passout pass:changeit && keytool -importkeystore -srckeystore /tmp/cacert.p12 -srcstoretype PKCS12 -srcstorepass changeit -alias cacert -deststorepass changeit -destkeypass changeit -destkeystore /jks/cacerts && chmod 400 /jks/cacerts",
+			"openssl pkcs12 -export -in /pem/tls-ca-bundle.pem -nokey -out /tmp/cacert.p12 -name cacert -passin pass:changeit -passout pass:changeit && keytool -importkeystore -srckeystore /tmp/cacert.p12 -srcstoretype PKCS12 -srcstorepass changeit -alias cacert -deststorepass changeit -destkeypass changeit -destkeystore /jks/cacerts && chmod 400 /jks/cacerts",
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{

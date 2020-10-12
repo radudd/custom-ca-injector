@@ -82,7 +82,6 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 			return nil, err
 		}
 		in.injectPem = injectPem
-		log.Info("Pod " + pod.GetObjectMeta().GetName() + "-> inject-pem: " + extrInjectPem)
 	}
 
 	// Check if annotation for injecting JKS ca is present
@@ -125,7 +124,6 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
-	log.Info("Mutating: Request received from " + pod.GetObjectMeta().GetName())
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
