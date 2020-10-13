@@ -133,27 +133,19 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 	initContainers := append([]corev1.Container{}, corev1.Container{
 		Name:  "generate-jks-truststore",
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
-		/*
 			Command: []string{
 				"sh",
 				"-xc",
 				fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && \
 					chmod 644 /jks/cacerts && \
 					csplit -z -f /tmp/crt- /pem/tls-ca-bundle.pem '/-----BEGIN CERTIFICATE-----/' '{*}' && \
-					#csplit -z -f /tmp/crt- $PEM_FILE '/-----BEGIN CERTIFICATE-----/' '{*}' &> /dev/null && \
 					for file in /tmp/crt*; do
 					  echo \"Probing $file\" && \
-					    keytool -printcert -file $file |egrep -i %s && \
+					    keytool -printcert -file $file && \
 					    keytool -noprompt -import -trustcacerts -file $file -alias $file -keystore /jks/cacerts -storepass changeit
 				     done && \
-				     chmod 400 /jks/cacerts`, pod.ObjectMeta.Annotations[AnnotationRegexCn]),
+				     chmod 400 /jks/cacerts`),
 			},
-		*/
-		Command: []string{
-			"sh",
-			"-xc",
-			"cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && chmod 644 /jks/cacerts && openssl pkcs12 -export -in /pem/tls-ca-bundle.pem -nokeys -out /tmp/cacert.p12 -name cacert -passin pass:changeit -passout pass:changeit && keytool -importkeystore -srckeystore /tmp/cacert.p12 -srcstoretype PKCS12 -srcstorepass changeit -alias cacert -deststorepass changeit -destkeypass changeit -destkeystore /jks/cacerts && chmod 400 /jks/cacerts",
-		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      "trusted-ca-pem",
