@@ -134,7 +134,7 @@ func Mutate(body []byte) ([]byte, error) {
 	if (*in).injectJks {
 		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)
-		log.Info("Mutating: injecting jks and pem to " + pod.ObjectMeta.Name)
+		log.Infof("%+v", pod.ObjectMeta)
 	}
 	if !(*in).injectJks && (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
