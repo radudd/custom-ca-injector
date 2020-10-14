@@ -156,12 +156,14 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 				MountPath: "/jks",
 			},
 		},
+		/*
 		Resources: corev1.ResourceRequirements{
 			Requests: corev1.ResourceList{
 				corev1.ResourceCPU:    resource.MustParse("500m"),
 				corev1.ResourceMemory: resource.MustParse("1Gi"),
 			},
 		},
+		*/
 	},
 	)
 	patch = append(patch, addVolume((*pod).Spec.Volumes, volumes, "/spec/volumes")...)

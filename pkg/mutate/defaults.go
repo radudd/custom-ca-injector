@@ -16,7 +16,7 @@ const (
 	DefaultInjectJksPath = "/etc/pki/ca-trust/extracted/java"
 
 	// DefaultInitContainerImage defines default image for init container
-	DefaultInitContainerImage = "docker.io/adoptopenjdk/openjdk13-openj9:ubi"
+	DefaultInitContainerImage = "registry.redhat.io/ubi8/openjdk-11"
 
 	// DefaultConfigMap defines the default name of the configMap containing custom CA
 	DefaultConfigMap = "custom-ca"
