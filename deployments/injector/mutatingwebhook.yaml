@@ -11,7 +11,7 @@ webhooks:
       namespace: custom-ca-injector
       path: /mutate
       port: 443
-  failurePolicy: Ignore
+  failurePolicy: Fail
   matchPolicy: Exact
   name: custompki.openshift.io
   namespaceSelector:

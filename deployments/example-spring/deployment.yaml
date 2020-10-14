@@ -1,0 +1,25 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: hello-spring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-spring
+  template:
+    metadata:
+      labels:
+        app: hello-spring
+      annotations:
+        custompki.openshift.io/inject-jks: 'true'
+    spec:
+      containers:
+        - name: hello-spring
+          image: 'quay.io/radudd/hello-spring:latest'
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          imagePullPolicy: Always
+  strategy:
+    type: RollingUpdate
