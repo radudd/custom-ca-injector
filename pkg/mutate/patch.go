@@ -5,7 +5,6 @@ import (
 
 	"github.com/appscode/jsonpatch"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func addContainer(target []corev1.Container, added []corev1.Container, basePath string) []*jsonpatch.JsonPatchOperation {
@@ -133,10 +132,10 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 	initContainers := append([]corev1.Container{}, corev1.Container{
 		Name:  "generate-jks-truststore",
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
-			Command: []string{
-				"sh",
-				"-xc",
-				fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && \
+		Command: []string{
+			"sh",
+			"-xc",
+			fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/java/cacerts /jks/cacerts && \
 					chmod 644 /jks/cacerts && \
 					csplit -z -f /tmp/crt- /pem/tls-ca-bundle.pem '/-----BEGIN CERTIFICATE-----/' '{*}' && \
 					for file in /tmp/crt*; do
@@ -145,7 +144,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 					    keytool -noprompt -import -trustcacerts -file $file -alias $file -keystore /jks/cacerts -storepass changeit
 				     done && \
 				     chmod 400 /jks/cacerts`),
-			},
+		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      "trusted-ca-pem",
@@ -157,12 +156,12 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 			},
 		},
 		/*
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("500m"),
-				corev1.ResourceMemory: resource.MustParse("1Gi"),
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("500m"),
+					corev1.ResourceMemory: resource.MustParse("1Gi"),
+				},
 			},
-		},
 		*/
 	},
 	)

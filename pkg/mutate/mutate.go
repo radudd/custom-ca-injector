@@ -131,19 +131,14 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 	}
 
-	podName := pod.ObjectMeta.Name
-	if pod.ObjectMeta.Name == nil {
-		podName := pod.ObjectMeta.GenerateName
-	}
-
 	if (*in).injectJks {
 		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)
-		log.Infof("Attempting mutation: injecting PEM and JKS to %s" + podName)
+		log.Infof("Attempting mutation: injecting PEM and JKS to %s" + pod.ObjectMeta.GenerateName)
 	}
 	if !(*in).injectJks && (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Infof("Attempting mutation: injecting PEM to %s" + podName)
+		log.Infof("Attempting mutation: injecting PEM to %s" + pod.ObjectMeta.GenerateName)
 	}
 
 	// Create the AdmissionReview.Response
