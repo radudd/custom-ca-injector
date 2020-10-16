@@ -1,12 +1,16 @@
+== Disclaimer
+
+This project is still in development. This is not supposed to be used on production systems.
+
 == About
 
 This Kubernetes MutatingWebhook provides a the possibility to append custom CA certificates to the pod's trusted CA config. You can inject your custom CA to both the Pod's PEM or JKS truststore.
 The only prerequisite is to have a configMap containing your list of your custom CA  certicicates in PEM format in the same project where you want to inject it to the pods.  
-Then you can define by pod annotations to configure which trustore you want to inject(PEM or JKS), the paths on the containers where the trustsore should be stored, the name of the configmap containing the custom CA.
+Then you can define by pod annotations to configure which trustore you want to inject(PEM or JKS), the paths on the containers where the truststore should be stored, the name of the configmap containing the custom CA.
 
 = Usage
 
-As I will rely on some OpenShift specific automations, like the signing of service SSL certificates or creation of configMaps containing cluster wide CA configuration, I will follow the deployment steps for OpenShift. I will emphasise however, what needs to be adjusted in case the deployment is on vanilla K8S. 
+As I will rely on some OpenShift specific automations, like the signing of service SSL certificates, I will follow the deployment steps for OpenShift. I will emphasise however, what needs to be adjusted in case the deployment is on vanilla K8S. 
 
 == Injector
 
@@ -46,15 +50,11 @@ Then label the namespace:
 oc label namespace custom-ca-injector-test inject=custom-pki
 ----
 
-As a prerequisite, we need to create a configmap containing the list of trusted CAs in PEM format.
-In OpenShift this can be easily created using an empty configMap labeled with `config.openshift.io/inject-trusted-cabundle: 'true'`
-If you are using vanilla K8S, just create a configmap containing the trusted CAs manually. The key in the configMap where the CA list is mapped should be called *ca-bundle.crt*
+As a prerequisite, we need to create a configmap containing the list of trusted CAs in PEM format. This configmap should contain the additional custom CA certificates that would need to be added additionally to the already trusted ones. The key in the configMap where the CA list is stored should be called *ca-bundle.crt*
 
 Let's deploy now a test application. We will use a a dummy Quarkus Hello World application. Let's assume that we will need to inject both JKS and PEM custom certificates.
 
 NOTE: Injecting JKS custom certicates will inject also the PEMs, so for our example we will need to annotate only with `custompki.openshift.io/inject-jks: 'true'`
-
-WARNING: When injecting JKS there is currently a limitation in the sense that only the first certificate listed in the PEM trust-store is added to trusted JKS certificate. Fix will follow.
 
 To trigger the injections, we need to annotate the pods in the deployment. 
 
@@ -85,7 +85,7 @@ The available annotations are listed below:
 |Path where the pem truststore should be injected
 
 |custompki.openshift.io/image
-|docker.io/library/openjdk
+|registry.redhat.io/ubi8/openjdk-11
 |If JKS needs to be injected, an additional initContainer that will convert the PEM to JKS will be required. This setting specifies the image to be used for this init container
 
 |custompki.openshift.io/configmap
@@ -94,3 +94,6 @@ The available annotations are listed below:
 |===
 
 
+== To Do
+
+* Refactor based on https://github.com/kubernetes/kubernetes/blob/v1.13.0/test/images/webhook/main.go
