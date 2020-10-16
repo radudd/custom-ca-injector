@@ -2,7 +2,6 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: custom-ca-injector
-  namespace: custom-ca-injector
 spec:
   replicas: 1
   selector:
@@ -21,14 +20,16 @@ spec:
       serviceAccount: ca-injector
       containers:
         - name: custom-ca-injector
-          image: quay.io/radudd/custom-ca-injector:master
+          image: quay.io/radudd/custom-ca-injector:k8s-style
+          imagePullPolicy: Always
           ports:
-            - containerPort: 8080
-              protocol: TCP
             - containerPort: 8443
               protocol: TCP
           volumeMounts:
             - name: custom-ca-injector-1
               mountPath: /ssl
+          environment:
+            - key: LOG_LEVEL
+              value: Debug
   strategy:
     type: RollingUpdate

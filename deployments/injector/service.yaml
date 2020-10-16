@@ -2,12 +2,11 @@ kind: Service
 apiVersion: v1
 metadata:
   name: custom-ca-injector
-  namespace: custom-ca-injector
   labels:
     app: custom-ca-injector
     app.kubernetes.io/component: custom-ca-injector
   annotations:
-    service.beta.openshift.io/serving-cert-secret-name: ca-injector
+    service.beta.openshift.io/serving-cert-secret-name: injector-ssl-certs
 spec:
   ports:
     - name: 443-tcp

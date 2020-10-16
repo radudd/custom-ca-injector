@@ -1,0 +1,6 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: custom-ca
+  annotations:
+    service.beta.openshift.io/inject-cabundle: 'true'
