@@ -116,7 +116,7 @@ func injectPemCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 		Command: []string{
 			"sh",
 			"-xc",
-			"cp /custom/tls-ca-bundle.pem /generated/custom.pem && cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /generated/base.pem && awk 'BEGIN {RS=\"-----END CERTIFICATE-----\"} {certs[$0] = $0 RS;} END {for(pem in certs) print certs[pem]}' /generated/*pem > tls-ca-bundle.pem && rm custom.pem base.pem",
+			"ls -ld /generated && cp /custom/tls-ca-bundle.pem /generated/custom.pem && cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /generated/base.pem && awk 'BEGIN {RS=\"-----END CERTIFICATE-----\"} {certs[$0] = $0 RS;} END {for(pem in certs) print certs[pem]}' /generated/*pem > tls-ca-bundle.pem && rm custom.pem base.pem",
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
