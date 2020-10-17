@@ -84,7 +84,7 @@ func injectPemCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 	var defaultMode int32 = 0400
 
 	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      "trusted-ca-pem",
+		Name:      "generated-pem",
 		MountPath: pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath],
 		ReadOnly:  true,
 	})
