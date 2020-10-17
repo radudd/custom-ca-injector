@@ -137,7 +137,7 @@ func TestMutatesValidRequest(t *testing.T) {
 	//assert.NoError(t, err, "conversion failed %s", err)
 
 	rr := r.Response
-	assert.Equal(t, `[{"op":"add","path":"/spec/volumes/-","value":{"name":"trusted-ca-pem","configMap":{"name":"custom-ca","items":[{"key":"ca-bundle.crt","path":"tls-ca-bundle.pem","mode":256}]}}},{"op":"add","path":"/spec/containers/0/volumeMounts/-","value":{"name":"trusted-ca-pem","readOnly":true,"mountPath":"/etc/pki/ca-trust/extracted/pem"}}]`, string(rr.Patch))
+	assert.Equal(t, `[{"op":"add","path":"/spec/volumes/-","value":{"name":"generated-pem","emptyDir":{}}},{"op":"add","path":"/spec/volumes/-","value":{"name":"custom-pem","configMap":{"name":"custom-ca","items":[{"key":"ca-bundle.crt","path":"tls-ca-bundle.pem","mode":256}]}}},{"op":"add","path":"/spec/containers/0/volumeMounts/-","value":{"name":"trusted-ca-pem","readOnly":true,"mountPath":"/etc/pki/ca-trust/extracted/pem"}},{"op":"add","path":"/spec/initContainers","value":[{"name":"generate-pem-truststore","image":"registry.redhat.io/ubi8/openjdk-11","command":["sh","-xc","cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /generated/base.pem \u0026\u0026 \\\n\t\t\t\tcp /custom/ca-bundle.crt /generated/custom.pem \u0026\u0026 \\\n\t\t\t\tawk 'BEGIN {RS=\"-----END CERTIFICATE-----\"} {certs[$0] = $0 RS;} END {for(pem in certs) print certs[pem]}' /generated/*pem \u003e tls-ca-bundle.pem \u0026\u0026 \\\n\t\t\t\trm custom.pem generated.pem\n\t\t\t"],"resources":{},"volumeMounts":[{"name":"generated-pem","mountPath":"/generated"},{"name":"custom-pem","mountPath":"/custom"}]}]}]`, string(rr.Patch))
 }
 
 func TestErrorsOnInvalidJson(t *testing.T) {
