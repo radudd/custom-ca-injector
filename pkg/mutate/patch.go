@@ -117,9 +117,9 @@ func injectPemCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 			"sh",
 			"-xc",
 			fmt.Sprintf(`cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /generated/base.pem && \
-				cp /custom/ca-bundle.crt /generated/custom.pem && \
+				cp /custom/tls-ca-bundle.pem /generated/custom.pem && \
 				awk 'BEGIN {RS="-----END CERTIFICATE-----"} {certs[$0] = $0 RS;} END {for(pem in certs) print certs[pem]}' /generated/*pem > tls-ca-bundle.pem && \
-				rm custom.pem generated.pem
+				rm custom.pem base.pem
 			`),
 		},
 		VolumeMounts: []corev1.VolumeMount{
@@ -194,9 +194,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 					chmod 644 /jks/cacerts && \
 					csplit -z -f /tmp/crt- /pem/tls-ca-bundle.pem '/-----BEGIN CERTIFICATE-----/' '{*}' && \
 					for file in /tmp/crt*; do
-					  echo \"Probing $file\" && \
-					    keytool -printcert -file $file && \
-					    keytool -noprompt -import -trustcacerts -file $file -alias $file -keystore /jks/cacerts -storepass changeit
+					   keytool -noprompt -import -trustcacerts -file $file -alias $file -keystore /jks/cacerts -storepass changeit
 				     done && \
 				     chmod 400 /jks/cacerts`),
 		},
