@@ -123,6 +123,11 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
+
+	if ar == nil {
+		return nil, nil
+	} 
+
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
