@@ -43,23 +43,14 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 		return nil, nil, fmt.Errorf("AdmissionReview is empty")
 	}
 
-	// Now, let's Try to extract the Object.Raw from Admission Review Request and load it to a Pod
-	//podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
-
 	pod := &corev1.Pod{}
 	_, _, err = codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, nil, pod)
 	if err != nil {
-		//ar.Response.Result = &metav1.Status{
-		//	Message: fmt.Sprintf("unexpected type %T", ar.Request.Object.Object),
-		//	Status:  metav1.StatusFailure,
-		//}
 		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
 	}
-	/*
 	if pod.ObjectMeta.Annotations[AnnotationCaPemInject] == "false" && pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "false" {
 		return nil, nil, fmt.Errorf("Pod is not marked for Custom CA injection")
 	}
-	*/
 	return pod, ar, nil
 }
 
