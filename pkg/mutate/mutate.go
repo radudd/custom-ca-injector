@@ -55,9 +55,11 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 		//}
 		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
 	}
+	/*
 	if pod.ObjectMeta.Annotations[AnnotationCaPemInject] == "false" && pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "false" {
 		return nil, nil, fmt.Errorf("Pod is not marked for Custom CA injection")
 	}
+	*/
 	return pod, ar, nil
 }
 
@@ -123,10 +125,6 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
-
-	if ar == nil {
-		return nil, nil
-	} 
 
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
