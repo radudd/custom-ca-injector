@@ -21,11 +21,10 @@ spec:
             - sh
             - '-c'
             - >-
-              cd /workspace &&
-              /layers/paketo-buildpacks_bellsoft-liberica/jre/bin/java
+              java
               -Djavax.net.ssl.trustStore=/etc/pki/ca-trust/extracted/java/cacerts
               -Djavax.net.ssl.trustStorePassword=changeit
-              org.springframework.boot.loader.JarLauncher
+              -jar /app.jar
           env:
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: /config/
