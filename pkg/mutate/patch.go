@@ -84,6 +84,7 @@ func injectPemCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 	var defaultMode int32 = 0400
 
 	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+
 		Name:      "generated-pem",
 		MountPath: pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath],
 		ReadOnly:  true,
@@ -110,6 +111,7 @@ func injectPemCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 				},
 			},
 		}})
+
 	initContainers := append([]corev1.Container{}, corev1.Container{
 		Name:  "generate-pem-truststore",
 		Image: (*pod).ObjectMeta.Annotations[AnnotationImage],
@@ -164,6 +166,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	})
+
 	volumes = append(volumes, corev1.Volume{
 		Name: "trusted-ca-pem",
 		VolumeSource: corev1.VolumeSource{
