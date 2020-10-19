@@ -1,0 +1,15 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: hello-spring-config
+data:
+  application.yaml: |-
+    keycloak:
+      realm: rhtr
+      auth-server-url: https://keycloak.rhtr2020-keycloak.svc:8443/auth
+      ssl-required: external
+      resource: spring
+      credentials:
+        secret: bd5ee823-d43f-4c8f-9062-8c6321175b96
+      use-resource-role-mappings: true
+      bearer-only: true

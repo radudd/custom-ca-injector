@@ -43,16 +43,9 @@ func requireMutation(body []byte) (*corev1.Pod, *admissionv1beta1.AdmissionRevie
 		return nil, nil, fmt.Errorf("AdmissionReview is empty")
 	}
 
-	// Now, let's Try to extract the Object.Raw from Admission Review Request and load it to a Pod
-	//podGVK := corev1.SchemeGroupVersion.WithKind("Pod")
-
 	pod := &corev1.Pod{}
 	_, _, err = codecs.UniversalDeserializer().Decode(ar.Request.Object.Raw, nil, pod)
 	if err != nil {
-		//ar.Response.Result = &metav1.Status{
-		//	Message: fmt.Sprintf("unexpected type %T", ar.Request.Object.Object),
-		//	Status:  metav1.StatusFailure,
-		//}
 		return nil, nil, fmt.Errorf("Unable to unmarshal json to a Pod object %v", err.Error())
 	}
 	if pod.ObjectMeta.Annotations[AnnotationCaPemInject] == "false" && pod.ObjectMeta.Annotations[AnnotationCaJksInject] == "false" {
@@ -123,6 +116,7 @@ func Mutate(body []byte) ([]byte, error) {
 		log.Error(err.Error())
 		return nil, err
 	}
+
 	// define the response that we will need to send back to K8S API
 	arResponse := admissionv1beta1.AdmissionResponse{}
 
@@ -132,13 +126,14 @@ func Mutate(body []byte) ([]byte, error) {
 	}
 
 	if (*in).injectJks {
-		patch = append(patch, injectPemCA(pod)...)
 		patch = append(patch, injectJksCA(pod)...)
-		log.Infof("Attempting mutation: injecting PEM and JKS to %s" + pod.ObjectMeta.GenerateName)
+		podMeta := fmt.Sprintf("%+v",pod.ObjectMeta)
+		log.Infof("Attempting mutation: injecting JKS to %+v" + podMeta)
 	}
-	if !(*in).injectJks && (*in).injectPem {
+	if (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Infof("Attempting mutation: injecting PEM to %s" + pod.ObjectMeta.GenerateName)
+		podMeta := fmt.Sprintf("%+v",pod.ObjectMeta)
+		log.Infof("Attempting mutation: injecting PEM to %+v" + podMeta)
 	}
 
 	// Create the AdmissionReview.Response
