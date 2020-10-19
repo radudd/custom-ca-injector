@@ -59,7 +59,7 @@ NOTE: Injecting JKS custom certicates will inject also the PEMs, so for our exam
 To trigger the injections, we need to annotate the pods in the deployment. 
 
 ----
-oc apply -f deployments/example-app
+oc apply -f deployments/example-spring
 ----
 
 The available annotations are listed below:
@@ -97,3 +97,5 @@ The available annotations are listed below:
 == To Do
 
 * Refactor based on https://github.com/kubernetes/kubernetes/blob/v1.13.0/test/images/webhook/main.go
+* Support authentication and use OpenShift best practices: https://docs.openshift.com/container-platform/4.5/architecture/admission-plug-ins.html
+* Investigate Binary ConfigMaps for JKS injection

@@ -1,21 +1,19 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: hello-spring
+  name: hello-spring-no-inject
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: hello-spring
+      app: hello-spring-no-inject
   template:
     metadata:
       labels:
-        app: hello-spring
-      annotations:
-        custompki.openshift.io/inject-jks: 'true'
+        app: hello-spring-no-inject
     spec:
       containers:
-        - name: hello-spring
+        - name: hello-spring-no-inject
           image: 'quay.io/radudd/hello-spring:latest'
           command:
             - sh
@@ -39,4 +37,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: hello-spring-config
+            name: hello-spring-config-no-inject
