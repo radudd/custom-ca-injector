@@ -108,7 +108,7 @@ func getPodName(p *corev1.Pod) string {
 	if p.ObjectMeta.Name != "" {
 		return p.ObjectMeta.Name
 	}
-	return strings.TrimSuffix(p.ObjectMeta.Name, "-")
+	return strings.TrimSuffix(p.ObjectMeta.GenerateName, "-")
 }
 
 // Mutate defines how to mutate the request
@@ -135,13 +135,11 @@ func Mutate(body []byte) ([]byte, error) {
 
 	if (*in).injectJks {
 		patch = append(patch, injectJksCA(pod)...)
-		log.Infof("Attempting mutation: injecting JKS to %s", pod.ObjectMeta.GenerateName)
-		log.Infof("Attempting mutation: injecting JKS to %s", pod.Name)
 		log.Infof("Attempting mutation: injecting JKS to %s", getPodName(pod))
 	}
 	if (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Infof("Attempting mutation: injecting PEM to %s", pod.ObjectMeta.GenerateName)
+		log.Infof("Attempting mutation: injecting PEM to %s", getPodName(pod))
 	}
 
 	// Create the AdmissionReview.Response
