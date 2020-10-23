@@ -127,13 +127,13 @@ func Mutate(body []byte) ([]byte, error) {
 
 	if (*in).injectJks {
 		patch = append(patch, injectJksCA(pod)...)
-		log.Infof("Attempting mutation: injecting JKS to %s" + pod.ObjectMeta.GenerateName)
+		log.Infof("Attempting mutation: injecting JKS to %s", pod.ObjectMeta.GenerateName)
 		//podMeta := fmt.Sprintf("%+v",pod.ObjectMeta)
 		//log.Infof("Attempting mutation: injecting JKS to %s" + podMeta)
 	}
 	if (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Infof("Attempting mutation: injecting JKS to %s" + pod.ObjectMeta.GenerateName)
+		log.Infof("Attempting mutation: injecting JKS to %s", pod.ObjectMeta.GenerateName)
 	}
 
 	// Create the AdmissionReview.Response
