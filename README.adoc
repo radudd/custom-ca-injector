@@ -54,8 +54,6 @@ As a prerequisite, we need to create a configmap containing the list of trusted 
 
 Let's deploy now a test application. We will use a a dummy Quarkus Hello World application. Let's assume that we will need to inject both JKS and PEM custom certificates.
 
-NOTE: Injecting JKS custom certicates will inject also the PEMs, so for our example we will need to annotate only with `custompki.openshift.io/inject-jks: 'true'`
-
 To trigger the injections, we need to annotate the pods in the deployment. 
 
 ----
