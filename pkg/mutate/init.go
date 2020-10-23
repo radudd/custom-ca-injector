@@ -9,7 +9,7 @@ import (
 
 func init() {
 
-	const DefaultLogLevel = "Debug"
+	const DefaultLogLevel = "Info"
 
 	logLevel, ok := os.LookupEnv("LOG_LEVEL")
 	if !ok {

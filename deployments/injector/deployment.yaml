@@ -20,7 +20,7 @@ spec:
       serviceAccount: ca-injector
       containers:
         - name: custom-ca-injector
-          image: quay.io/radudd/custom-ca-injector:k8s-style
+          image: quay.io/radudd/custom-ca-injector:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8443
