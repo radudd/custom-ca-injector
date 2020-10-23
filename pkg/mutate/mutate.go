@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/appscode/jsonpatch"
 	log "github.com/sirupsen/logrus"
@@ -103,6 +104,13 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	return &in, nil
 }
 
+func getPodName(p *corev1.Pod) string {
+	if p.ObjectMeta.Name != "" {
+		return p.ObjectMeta.Name
+	}
+	return strings.TrimSuffix(p.Name, "-")
+}
+
 // Mutate defines how to mutate the request
 func Mutate(body []byte) ([]byte, error) {
 	// define patch operations
@@ -128,10 +136,11 @@ func Mutate(body []byte) ([]byte, error) {
 	if (*in).injectJks {
 		patch = append(patch, injectJksCA(pod)...)
 		log.Infof("Attempting mutation: injecting JKS to %s", pod.ObjectMeta.GenerateName)
+		log.Infof("Attempting mutation: injecting JKS to %s", pod.Name)
 	}
 	if (*in).injectPem {
 		patch = append(patch, injectPemCA(pod)...)
-		log.Infof("Attempting mutation: injecting JKS to %s", pod.ObjectMeta.GenerateName)
+		log.Infof("Attempting mutation: injecting PEM to %s", pod.ObjectMeta.GenerateName)
 	}
 
 	// Create the AdmissionReview.Response
