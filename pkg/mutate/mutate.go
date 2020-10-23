@@ -104,6 +104,7 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 	return &in, nil
 }
 
+
 func getPodName(p *corev1.Pod) string {
 	if p.ObjectMeta.Name != "" {
 		return p.ObjectMeta.Name

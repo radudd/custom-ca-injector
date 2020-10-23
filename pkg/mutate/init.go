@@ -19,7 +19,6 @@ func init() {
 	if err != nil {
 		return
 	}
-
 	// log as JSON
 	log.SetFormatter(&log.JSONFormatter{})
 
