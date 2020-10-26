@@ -21,6 +21,9 @@ const (
 	// DefaultConfigMap defines the default name of the configMap containing custom CA
 	DefaultConfigMap = "custom-ca"
 
+	// DefaultConfigMap defines the default name of the configMap containing custom CA
+	DefaultConfigMapKey = "ca-bundle.crt"
+
 	// Default LogLevel
 	DefaultLogLevel = log.InfoLevel
 )

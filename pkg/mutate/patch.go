@@ -103,7 +103,7 @@ func injectPemCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 				},
 				Items: []corev1.KeyToPath{
 					{
-						Key:  "ca-bundle.crt",
+						Key:  (*pod).ObjectMeta.Annotations[AnnotationConfigMapKey],
 						Path: "tls-ca-bundle.pem",
 						Mode: &defaultMode,
 					},
@@ -173,7 +173,7 @@ func injectJksCA(pod *corev1.Pod) []*jsonpatch.JsonPatchOperation {
 				},
 				Items: []corev1.KeyToPath{
 					{
-						Key:  "ca-bundle.crt",
+						Key:  (*pod).ObjectMeta.Annotations[AnnotationConfigMapKey],
 						Path: "tls-ca-bundle.pem",
 						Mode: &defaultMode,
 					},

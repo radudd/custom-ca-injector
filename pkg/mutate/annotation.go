@@ -19,6 +19,9 @@ const (
 	// AnnotationConfigMap controls the configmap containing merged CA
 	AnnotationConfigMap = "custompki.openshift.io/configmap"
 
+	// AnnotationConfigMapKey controls the configmap key containing merged CA
+	AnnotationConfigMapKey = "custompki.openshift.io/configmap-key"
+
 	// AnnotationRegexCn controls the regex matching the CAs to be added to merged CA
 	AnnotationRegexCn = "custompki.openshift.io/regex-cn"
 )

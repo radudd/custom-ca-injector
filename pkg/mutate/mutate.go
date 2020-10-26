@@ -94,6 +94,9 @@ func initialize(pod *corev1.Pod) (*injection, error) {
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMap]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationConfigMap] = DefaultConfigMap
 		}
+		if _, ok := pod.ObjectMeta.Annotations[AnnotationConfigMapKey]; !ok {
+			pod.ObjectMeta.Annotations[AnnotationConfigMapKey] = DefaultConfigMapKey
+		}
 		if _, ok := pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath]; !ok {
 			pod.ObjectMeta.Annotations[AnnotationCaPemInjectPath] = DefaultInjectPemPath
 		}
